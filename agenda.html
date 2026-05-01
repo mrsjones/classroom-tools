@@ -2,9 +2,7 @@
 <html>
 <head>
   <title>Class Agenda</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-  <meta name="mobile-web-app-capable" content="yes">
-  <style>
+   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     html, body {
       width: 100%;
@@ -30,48 +28,50 @@
   <script>
     const PRESENTATION_ID = "1OpBaUMZwbd2CPJbGkkSwrrWvSPXCnvjDAiVqr92osZ0";
 
-    // Shown before Period 1 starts at 8:15
-    const DEFAULT_SLIDE = 6;
+    // Shown before 1st Period, beginning at 8:15am
+    const DEFAULT_SLIDE = 7;
 
     const SCHEDULE = [
-      { name: "Period 1", time: "08:15", slide: 6 },
+	  { name: "Period 1", time: "08:15", slide: 6 },
       { name: "Period 2", time: "09:17", slide: 5 },
       { name: "Period 3", time: "10:09", slide: 4 },
       { name: "Period 4", time: "11:01", slide: 3 },
-      { name: "Conference", time: "11:53", slide: 2 },
-      { name: "Period 6", time: "13:01", slide: 1 },
-      { name: "Period 7", time: "13:53", slide: 0 },
-      { name: "Period 8", time: "14:45", slide: 0 },
+      { name: "Period 6", time: "13:29", slide: 2 },
+      { name: "Period 7", time: "14:21", slide: 1 },
+      { name: "Period 8", time: "15:13", slide: 0 },
+	  { name: "Down time", time: "16:05", slide: 7 },
     ];
 
-    let currentSlideNumber = null;
-
     function log(msg) {
-      const d = document.getElementById('debug');
-      if (d) d.innerHTML = msg;
-    }
-
-    function timeToMinutes(timeStr) {
-      const [h, m] = timeStr.split(':').map(Number);
-      return h * 60 + m;
+      const el = document.getElementById('debug');
+      if (el) el.innerText = msg;
+      console.log(msg);
     }
 
     function getCurrentPeriod() {
-      const now = new Date();
-      const currentMinutes = now.getHours() * 60 + now.getMinutes();
+      try {
+        const now = new Date();
+        const currentMinutes = now.getHours() * 60 + now.getMinutes();
+        const timeStr = now.toLocaleTimeString();
 
-      let activePeriod = { name: "Before School", slide: DEFAULT_SLIDE };
-
-      for (const period of SCHEDULE) {
-        if (currentMinutes >= timeToMinutes(period.time)) {
-          activePeriod = period;
-        } else {
-          break;
+        let current = { name: "Before School", slide: DEFAULT_SLIDE };
+        for (const period of SCHEDULE) {
+          const [h, m] = period.time.split(':').map(Number);
+          if (currentMinutes >= h * 60 + m) {
+            current = period;
+          }
         }
-      }
 
-      return activePeriod;
+        log(`Time: ${timeStr} | Period: ${current.name} | Slide: ${current.slide + 1}`);
+        return current;
+
+      } catch(e) {
+        log(`ERROR in getCurrentPeriod: ${e.message}`);
+        return { name: "Error", slide: DEFAULT_SLIDE };
+      }
     }
+
+    let currentSlideNumber = null;
 
     function updateSlide() {
       try {
@@ -83,7 +83,6 @@
           const url = `https://docs.google.com/presentation/d/${PRESENTATION_ID}/embed?slide=${slideNumber}&rm=minimal`;
           document.getElementById('slides').src = url;
           currentSlideNumber = slideNumber;
-          log(`Now showing: ${period.name} (slide ${slideNumber})`);
         }
 
       } catch(e) {
@@ -91,9 +90,14 @@
       }
     }
 
-    // Run immediately on load, then check every 60 seconds
-    updateSlide();
+    setTimeout(updateSlide, 500);
     setInterval(updateSlide, 60000);
+
+    // Request fullscreen automatically on load
+    document.addEventListener('click', function enterFullscreen() {
+      document.documentElement.requestFullscreen();
+      document.removeEventListener('click', enterFullscreen);
+    });
   </script>
 </body>
 </html>
