@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Class Agenda</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <meta name="mobile-web-app-capable" content="yes">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: black;
+    }
+    #debug {
+      display: none;
+    }
+    iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <div id="debug">Loading...</div>
+  <iframe id="slides" src=""></iframe>
+
+  <script>
+    const PRESENTATION_ID = "1OpBaUMZwbd2CPJbGkkSwrrWvSPXCnvjDAiVqr92osZ0";
+
+    // Shown before Period 1 starts at 8:15
+    const DEFAULT_SLIDE = 6;
+
+    const SCHEDULE = [
+      { name: "Period 1", time: "08:15", slide: 6 },
+      { name: "Period 2", time: "09:17", slide: 5 },
+      { name: "Period 3", time: "10:09", slide: 4 },
+      { name: "Period 4", time: "11:01", slide: 3 },
+      { name: "Conference", time: "11:53", slide: 2 },
+      { name: "Period 6", time: "13:01", slide: 1 },
+      { name: "Period 7", time: "13:53", slide: 0 },
+      { name: "Period 8", time: "14:45", slide: 0 },
+    ];
+
+    let currentSlideNumber = null;
+
+    function log(msg) {
+      const d = document.getElementById('debug');
+      if (d) d.innerHTML = msg;
+    }
+
+    function timeToMinutes(timeStr) {
+      const [h, m] = timeStr.split(':').map(Number);
+      return h * 60 + m;
+    }
+
+    function getCurrentPeriod() {
+      const now = new Date();
+      const currentMinutes = now.getHours() * 60 + now.getMinutes();
+
+      let activePeriod = { name: "Before School", slide: DEFAULT_SLIDE };
+
+      for (const period of SCHEDULE) {
+        if (currentMinutes >= timeToMinutes(period.time)) {
+          activePeriod = period;
+        } else {
+          break;
+        }
+      }
+
+      return activePeriod;
+    }
+
+    function updateSlide() {
+      try {
+        const period = getCurrentPeriod();
+        const slideNumber = period.slide + 1;
+
+        // Only reload if the slide has actually changed
+        if (slideNumber !== currentSlideNumber) {
+          const url = `https://docs.google.com/presentation/d/${PRESENTATION_ID}/embed?slide=${slideNumber}&rm=minimal`;
+          document.getElementById('slides').src = url;
+          currentSlideNumber = slideNumber;
+          log(`Now showing: ${period.name} (slide ${slideNumber})`);
+        }
+
+      } catch(e) {
+        log(`ERROR in updateSlide: ${e.message}`);
+      }
+    }
+
+    // Run immediately on load, then check every 60 seconds
+    updateSlide();
+    setInterval(updateSlide, 60000);
+  </script>
+</body>
+</html>
