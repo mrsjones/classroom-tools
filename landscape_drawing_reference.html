@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🌄 Python Landscape Drawing — Interactive Reference</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,700;1,400&family=DM+Mono:wght@400;500&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --sky:#87CEEB; --sky-dark:#5BA4CF; --forest:#2D5016; --forest-mid:#3E7B1F;
+  --sun:#F39C12; --bg:#F0F7F0; --card:#ffffff; --sidebar-bg:#1C3A10;
+  --code-bg:#0D1F08; --text:#1a1a1a; --muted:#6b7c6b; --border:#d4e8d4;
+  --accent:#E67E22; --radius:12px;
+}
+* { box-sizing:border-box; margin:0; padding:0; }
+body { font-family:'Nunito',sans-serif; background:var(--bg); color:var(--text);
+       height:100vh; display:flex; flex-direction:column; overflow:hidden; }
+
+header { background:linear-gradient(135deg,var(--forest) 0%,#1a5276 100%);
+  color:white; padding:12px 24px; display:flex; align-items:center; gap:16px;
+  flex-shrink:0; box-shadow:0 2px 12px rgba(0,0,0,.3); z-index:10; }
+header h1 { font-family:'Fraunces',serif; font-size:1.4rem; }
+header p { font-size:.8rem; opacity:.75; margin-top:2px; }
+.tab-bar { margin-left:auto; display:flex; gap:6px; }
+.tab-btn { background:rgba(255,255,255,.15); border:1px solid rgba(255,255,255,.25);
+  color:white; padding:6px 16px; border-radius:20px; cursor:pointer;
+  font-family:'Nunito',sans-serif; font-size:.82rem; font-weight:700; transition:all .2s; }
+.tab-btn.active,.tab-btn:hover { background:rgba(255,255,255,.9); color:var(--forest); }
+
+.app { display:flex; flex:1; overflow:hidden; }
+
+.sidebar { width:210px; background:var(--sidebar-bg); color:#c8e6c8;
+  overflow-y:auto; flex-shrink:0; padding:12px 0; }
+.sidebar-group-label { font-size:.65rem; font-weight:800; letter-spacing:.1em;
+  text-transform:uppercase; color:#6aab6a; padding:8px 16px 4px; }
+.fn-btn { display:flex; align-items:center; gap:8px; width:100%; background:none;
+  border:none; color:#b8d8b8; padding:7px 16px; text-align:left; cursor:pointer;
+  font-family:'DM Mono',monospace; font-size:.72rem; transition:all .15s;
+  border-left:3px solid transparent; }
+.fn-btn:hover { background:rgba(255,255,255,.08); color:white; }
+.fn-btn.active { background:rgba(135,206,235,.15); color:var(--sky); border-left-color:var(--sky); }
+.fn-btn .icon { font-size:1rem; flex-shrink:0; }
+
+.main { flex:1; display:flex; overflow:hidden; }
+.canvas-col { flex:1; display:flex; flex-direction:column; align-items:center;
+  justify-content:center; background:var(--bg); padding:16px; gap:12px; }
+.canvas-wrap { border-radius:var(--radius); overflow:hidden;
+  box-shadow:0 4px 24px rgba(0,0,0,.15); border:2px solid var(--border); background:white; }
+#preview { display:block; }
+.canvas-label { font-size:.7rem; color:var(--muted); font-family:'DM Mono',monospace; }
+
+.controls-col { width:300px; background:var(--card); border-left:1px solid var(--border);
+  display:flex; flex-direction:column; overflow:hidden; }
+.fn-header { padding:16px 18px 12px; border-bottom:1px solid var(--border);
+  background:linear-gradient(135deg,var(--forest) 0%,#1a5276 100%); color:white; }
+.fn-header .fn-name { font-family:'DM Mono',monospace; font-size:.9rem; font-weight:500; color:#90EE90; }
+.fn-header .fn-desc { font-size:.75rem; opacity:.85; margin-top:4px; line-height:1.4; }
+.controls-scroll { flex:1; overflow-y:auto; padding:14px 18px; }
+
+.code-display-wrap { position:relative; margin-bottom:14px; }
+.code-display { background:var(--code-bg); color:#90EE90; font-family:'DM Mono',monospace;
+  font-size:.72rem; padding:12px 16px 12px 16px; border-radius:8px;
+  line-height:1.6; word-break:break-all; border:1px solid #1a3a1a; }
+.copy-btn { position:absolute; top:6px; right:6px; background:rgba(255,255,255,.1);
+  border:1px solid rgba(255,255,255,.2); color:#90EE90; font-size:.65rem; font-weight:700;
+  padding:3px 8px; border-radius:4px; cursor:pointer; font-family:'Nunito',sans-serif;
+  transition:all .15s; }
+.copy-btn:hover { background:rgba(255,255,255,.25); }
+.copy-btn.copied { color:#4CAF50; border-color:#4CAF50; }
+.code-display .kw{color:#569cd6}.code-display .fn{color:#dcdcaa}
+.code-display .num{color:#b5cea8}.code-display .str{color:#ce9178}
+
+.param-group { margin-bottom:14px; }
+.param-label { display:flex; justify-content:space-between; align-items:center; margin-bottom:5px; }
+.param-name { font-family:'DM Mono',monospace; font-size:.72rem; font-weight:500; color:var(--forest); }
+.param-val { font-family:'DM Mono',monospace; font-size:.72rem; background:var(--bg);
+  padding:2px 8px; border-radius:4px; color:var(--accent); font-weight:500; min-width:50px; text-align:right; }
+.param-desc { font-size:.68rem; color:var(--muted); margin-bottom:5px; line-height:1.3; }
+input[type=range] { width:100%; accent-color:var(--forest-mid); cursor:pointer; }
+input[type=color] { width:40px; height:26px; border:none; border-radius:4px; cursor:pointer; padding:0; }
+.color-presets { display:flex; gap:4px; flex-wrap:wrap; }
+.color-dot { width:20px; height:20px; border-radius:50%; cursor:pointer;
+  border:2px solid transparent; transition:transform .1s; }
+.color-dot:hover { transform:scale(1.2); border-color:#333; }
+.bool-row { display:flex; gap:8px; }
+.bool-btn { flex:1; padding:5px; border:1px solid var(--border); border-radius:6px; cursor:pointer;
+  font-size:.72rem; font-family:'Nunito',sans-serif; font-weight:700; background:white; transition:all .15s; }
+.bool-btn.active { background:var(--forest); color:white; border-color:var(--forest); }
+
+#scene-tab { flex:1; display:flex; gap:20px; align-items:flex-start;
+  justify-content:center; padding:20px; overflow:auto; }
+.scene-right { display:flex; flex-direction:column; gap:12px; max-width:360px; }
+.scene-title { font-family:'Fraunces',serif; font-size:1.1rem; color:var(--forest); }
+.scene-code { background:var(--code-bg); color:#90EE90; font-family:'DM Mono',monospace;
+  font-size:.68rem; padding:16px; border-radius:10px; line-height:1.7; overflow:auto; max-height:520px;
+  white-space: pre; }
+.scene-code .kw{color:#569cd6}.scene-code .fn{color:#dcdcaa}
+.scene-code .num{color:#b5cea8}.scene-code .str{color:#ce9178}.scene-code .cm{color:#6a9955}
+#fullCanvas { border-radius:10px; box-shadow:0 6px 30px rgba(0,0,0,.2); display:block; }
+.hidden { display:none !important; }
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>🌄 Python Landscape Drawing</h1>
+    <p>Interactive Function Reference &nbsp;·&nbsp; ColabTurtlePlus</p>
+  </div>
+  <div class="tab-bar">
+    <button class="tab-btn active" onclick="showTab('explore')">🔍 Explorer</button>
+    <button class="tab-btn"        onclick="showTab('scene')">🖼 Full Scene</button>
+  </div>
+</header>
+
+<div class="app">
+<nav class="sidebar" id="sidebar">
+  <div class="sidebar-group">
+    <div class="sidebar-group-label">Background</div>
+    <button class="fn-btn active" onclick="selectFn('draw_sky')">  <span class="icon">🌤</span>draw_sky()</button>
+    <button class="fn-btn"        onclick="selectFn('draw_grass')"><span class="icon">🌿</span>draw_grass()</button>
+  </div>
+  <div class="sidebar-group">
+    <div class="sidebar-group-label">Sky Objects</div>
+    <button class="fn-btn" onclick="selectFn('draw_sun')">  <span class="icon">☀️</span>draw_sun()</button>
+    <button class="fn-btn" onclick="selectFn('draw_cloud')"><span class="icon">☁️</span>draw_cloud()</button>
+    <button class="fn-btn" onclick="selectFn('draw_bird')"> <span class="icon">🐦</span>draw_bird()</button>
+  </div>
+  <div class="sidebar-group">
+    <div class="sidebar-group-label">Ground Objects</div>
+    <button class="fn-btn" onclick="selectFn('draw_tree')">    <span class="icon">🌲</span>draw_tree()</button>
+    <button class="fn-btn" onclick="selectFn('draw_trees')">   <span class="icon">🌲</span>draw_trees()</button>
+    <button class="fn-btn" onclick="selectFn('draw_house')">   <span class="icon">🏠</span>draw_house()</button>
+    <button class="fn-btn" onclick="selectFn('draw_houses')">  <span class="icon">🏘</span>draw_houses()</button>
+    <button class="fn-btn" onclick="selectFn('draw_rock')">    <span class="icon">🪨</span>draw_rock()</button>
+  </div>
+  <div class="sidebar-group">
+    <div class="sidebar-group-label">Basic Shapes</div>
+    <button class="fn-btn" onclick="selectFn('draw_rectangle')"><span class="icon">▬</span>draw_rectangle()</button>
+    <button class="fn-btn" onclick="selectFn('draw_square')">   <span class="icon">⬛</span>draw_square()</button>
+    <button class="fn-btn" onclick="selectFn('draw_triangle')"> <span class="icon">🔺</span>draw_triangle()</button>
+    <button class="fn-btn" onclick="selectFn('draw_circle')">   <span class="icon">⭕</span>draw_circle()</button>
+  </div>
+</nav>
+
+<!-- Explorer tab -->
+<div class="main" id="explore-tab">
+  <div class="canvas-col">
+    <div class="canvas-wrap"><canvas id="preview" width="560" height="380"></canvas></div>
+    <div class="canvas-label">(0,0) = center &nbsp;·&nbsp; x → right &nbsp;·&nbsp; y → up</div>
+  </div>
+  <div class="controls-col">
+    <div class="fn-header">
+      <div class="fn-name" id="fn-name">draw_sky()</div>
+      <div class="fn-desc" id="fn-desc">Fills the entire canvas with a sky-blue background.</div>
+    </div>
+    <div class="controls-scroll">
+      <div class="code-display-wrap">
+      <div class="code-display" id="code-display"></div>
+      <button class="copy-btn" id="copy-btn" onclick="copyCode()">Copy</button>
+    </div>
+      <div id="params-container"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Full scene tab -->
+<div id="scene-tab" class="hidden">
+  <canvas id="fullCanvas" width="800" height="600"></canvas>
+  <div class="scene-right">
+    <div class="scene-title">draw_landscape()</div>
+    <div class="scene-code">
+<span class="kw">def</span> <span class="fn">draw_landscape</span>():
+    <span class="fn">init_scene</span>()
+
+    <span class="cm"># Background</span>
+    <span class="fn">draw_sky</span>()
+    <span class="fn">draw_grass</span>()
+
+    <span class="cm"># Sun &amp; clouds</span>
+    <span class="fn">draw_sun</span>(<span class="num">0</span>, <span class="num">190</span>, <span class="num">75</span>)
+    <span class="fn">draw_cloud</span>(<span class="num">-220</span>, <span class="num">165</span>, <span class="num">25</span>)
+    <span class="fn">draw_cloud</span>(<span class="num">160</span>,  <span class="num">185</span>, <span class="num">20</span>)
+    <span class="fn">draw_cloud</span>(<span class="num">330</span>,  <span class="num">170</span>, <span class="num">22</span>)
+
+    <span class="cm"># Birds</span>
+    <span class="fn">draw_bird</span>(<span class="num">-170</span>, <span class="num">135</span>, <span class="str">"black"</span>, <span class="num">13</span>)
+    <span class="fn">draw_bird</span>(<span class="num">-20</span>,  <span class="num">150</span>, <span class="str">"black"</span>, <span class="num">10</span>)
+    <span class="fn">draw_bird</span>(<span class="num">210</span>,  <span class="num">140</span>, <span class="str">"black"</span>, <span class="num">11</span>)
+
+    <span class="cm"># Trees (back), houses, trees (front)</span>
+    <span class="fn">draw_trees</span>(<span class="num">-360</span>, <span class="num">30</span>,  <span class="num">5</span>, <span class="num">65</span>)
+    <span class="fn">draw_houses</span>(<span class="num">-130</span>, <span class="num">-40</span>, <span class="num">4</span>, <span class="num">42</span>)
+    <span class="fn">draw_trees</span>(<span class="num">210</span>,  <span class="num">-70</span>, <span class="num">3</span>, <span class="num">85</span>)
+
+    <span class="cm"># Rocks &amp; shapes</span>
+    <span class="fn">draw_rock</span>(<span class="num">-230</span>, <span class="num">-165</span>, <span class="str">"#808080"</span>, <span class="num">18</span>)
+    <span class="fn">draw_rock</span>(<span class="num">285</span>,  <span class="num">-170</span>, <span class="str">"#696969"</span>, <span class="num">15</span>)
+    <span class="fn">draw_circle</span>(<span class="num">-340</span>, <span class="num">-165</span>, <span class="str">"#9B59B6"</span>, <span class="num">18</span>)
+    <span class="fn">draw_square</span>(<span class="num">350</span>,  <span class="num">75</span>,   <span class="str">"#3498DB"</span>, <span class="num">32</span>)
+    <span class="fn">draw_triangle</span>(<span class="num">335</span>, <span class="num">-85</span>, <span class="kw">True</span>, <span class="str">"#E74C3C"</span>, <span class="num">42</span>)
+    <span class="fn">draw_rectangle</span>(<span class="num">-350</span>, <span class="num">45</span>, <span class="num">55</span>, <span class="num">22</span>, <span class="str">"#F39C12"</span>)
+    </div>
+  </div>
+</div>
+</div><!-- .app -->
+
+<script>
+// ── Canvas refs ───────────────────────────────────────────────────────────────
+const preview = document.getElementById('preview');
+const pctx    = preview.getContext('2d');
+const CW=preview.width, CH=preview.height, CX=CW/2, CY=CH/2;
+
+const full = document.getElementById('fullCanvas');
+const fctx = full.getContext('2d');
+const FW=full.width, FH=full.height, FX=FW/2, FY=FH/2;
+
+// ── Drawing factory ───────────────────────────────────────────────────────────
+// Returns a set of low-level drawing functions bound to a given ctx and origin.
+// This is the single source of truth — both the explorer and full scene use it.
+function makeDrawer(ctx, cx, cy) {
+  const T = v => cx + v;          // math x  →  canvas x
+  const U = v => cy - v;          // math y  →  canvas y  (flip)
+
+  function drawRect(x, y, rl, rw, col) {
+    ctx.fillStyle = col;
+    ctx.fillRect(T(x - rw/2), U(y + rl/2), rw, rl);
+  }
+
+  function drawTri(x, y, filled, col, size) {
+    const h = Math.sin(Math.PI/3) * size;
+    ctx.beginPath();
+    ctx.moveTo(T(x - size/2), U(y - h/2));
+    ctx.lineTo(T(x + size/2), U(y - h/2));
+    ctx.lineTo(T(x),          U(y + h/2));
+    ctx.closePath();
+    if (filled) { ctx.fillStyle = col;   ctx.fill(); }
+    else        { ctx.strokeStyle = col; ctx.lineWidth = 1.5; ctx.stroke(); }
+  }
+
+  function drawCirc(x, y, col, r) {
+    ctx.beginPath();
+    ctx.arc(T(x), U(y), r, 0, 2*Math.PI);
+    ctx.fillStyle = col;
+    ctx.fill();
+  }
+
+  function drawTree(x, y, size) {
+    const h = Math.sin(Math.PI/3) * size;
+    drawTri(x, y,                    true, '#2E8B57', size);
+    drawTri(x, y-(60/200)*size,      true, '#228B22', size);
+    drawTri(x, y-(120/200)*size,     true, '#006400', size);
+    const th=(80/200)*size, tw=(30/200)*size;
+    drawRect(x, y - h - th/2, th, tw, '#8B4513');
+  }
+
+  function drawCloud(x, y, size) {
+    ctx.fillStyle = 'white';
+    [[0,0],[size,size*0.35],[-size,size*0.35]].forEach(([ox,oy]) => {
+      ctx.beginPath();
+      ctx.arc(T(x+ox), U(y+oy), size, 0, 2*Math.PI);
+      ctx.fill();
+    });
+  }
+
+  function drawBird(x, y, col, size) {
+    ctx.strokeStyle = col;
+    ctx.lineWidth = 1.5;
+    [[45,-90],[135,90]].forEach(([a1,da]) => {
+      const r1=a1*Math.PI/180, r2=(a1+da)*Math.PI/180;
+      const x1=T(x)+size*Math.cos(r1), y1=U(y)-size*Math.sin(r1);
+      const x2=x1+(size/2)*Math.cos(r2), y2=y1-(size/2)*Math.sin(r2);
+      ctx.beginPath(); ctx.moveTo(T(x),U(y));
+      ctx.lineTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
+    });
+  }
+
+  function drawSun(x, y, radius) {
+    let px=T(x), py=U(y), heading=0;
+    ctx.strokeStyle='orange'; ctx.lineWidth=1.5;
+    ctx.beginPath(); ctx.moveTo(px,py);
+    for(let i=0;i<80;i++){
+      px += radius*Math.cos(heading*Math.PI/180);
+      py -= radius*Math.sin(heading*Math.PI/180);
+      ctx.lineTo(px,py);
+      heading=(heading+170)%360;
+    }
+    ctx.stroke();
+  }
+
+  function drawRock(x, y, col, size) {
+    let px=T(x-size/2), py=U(y-size/2), heading=0;
+    const steps=[[10,size],[15,.75*size],[85,size],[15,size*.333],
+                 [10,size*.5],[45,size],[35,size/1.3],[50,size],[15,size/2],[70,size/1.2]];
+    ctx.beginPath(); ctx.moveTo(px,py);
+    for(const [a,d] of steps){
+      heading=(heading+a)%360;
+      px += d*Math.cos(heading*Math.PI/180);
+      py -= d*Math.sin(heading*Math.PI/180);
+      ctx.lineTo(px,py);
+    }
+    ctx.closePath(); ctx.fillStyle=col; ctx.fill();
+  }
+
+  function drawHouse(x, y, col, size) {
+    drawRect(x, y, size, size, col);
+    const roofY = y + size/2 + (Math.sin(Math.PI/3)*size)/2;
+    drawTri(x, roofY, true, col, size);
+  }
+
+  function drawSky() {
+    ctx.fillStyle='#87CEEB';
+    ctx.fillRect(0, 0, cx*2, cy*2);
+  }
+
+  function drawGrass() {
+    ctx.fillStyle='#228B22';
+    ctx.fillRect(0, cy, cx*2, cy);
+  }
+
+  const houseColors=['#E8A87C','#85DCBA','#F7D794','#778CA3','#CF6A87','#AED6F1','#A9CCE3','#F0B27A'];
+
+  function drawTrees(x, y, numTrees, size) {
+    const sc=0.1;
+    for(let n=0;n<numTrees;n++){
+      let sv = y<0 ? size+Math.abs(sc*y) : size-sc*y<=0 ? 10 : Math.abs(size-sc*y);
+      drawTree(x + n*(160/200)*size, y, sv);
+    }
+  }
+
+  function drawHouses(x, y, numHouses, size) {
+    for(let n=0;n<numHouses;n++)
+      drawHouse(x + n*1.3*size, y, houseColors[n%houseColors.length], size);
+  }
+
+  return { drawRect, drawTri, drawCirc, drawTree, drawCloud, drawBird,
+           drawSun, drawRock, drawHouse, drawSky, drawGrass, drawTrees, drawHouses };
+}
+
+// ── Explorer: draw with background context ────────────────────────────────────
+const GROUND_FNS = new Set(['draw_tree','draw_trees','draw_house','draw_houses',
+                             'draw_rock','draw_rectangle','draw_square','draw_triangle','draw_circle']);
+
+function renderPreview(fn, p) {
+  pctx.clearRect(0,0,CW,CH);
+  const D = makeDrawer(pctx, CX, CY);
+
+  // Always add sky; add grass for ground elements
+  if (fn !== 'draw_sky') D.drawSky();
+  if (GROUND_FNS.has(fn)) D.drawGrass();
+
+  switch(fn){
+    case 'draw_sky':                                          D.drawSky();   break;
+    case 'draw_grass':        D.drawSky();                   D.drawGrass(); break;
+    case 'draw_sun':          D.drawSun(p.x,p.y,p.radius);               break;
+    case 'draw_cloud':        D.drawCloud(p.x,p.y,p.size);               break;
+    case 'draw_bird':         D.drawBird(p.x,p.y,p.bird_color,p.size);        break;
+    case 'draw_tree':         D.drawTree(p.x,p.y,p.size);                break;
+    case 'draw_trees':        D.drawTrees(p.x,p.y,p.num_trees,p.size);  break;
+    case 'draw_house':        D.drawHouse(p.x,p.y,p.house_color,p.size);      break;
+    case 'draw_houses':       D.drawHouses(p.x,p.y,p.num_houses,p.size);break;
+    case 'draw_rock':         D.drawRock(p.x,p.y,p.rock_color,p.size);       break;
+    case 'draw_rectangle':    D.drawRect(p.x,p.y,p.rect_length,p.rect_width,p.fill_color); break;
+    case 'draw_square':       D.drawRect(p.x,p.y,p.size,p.size,p.fill_color);              break;
+    case 'draw_triangle':     D.drawTri(p.x,p.y,p.filled,p.fill_color,p.size);             break;
+    case 'draw_circle':       D.drawCirc(p.x,p.y,p.fill_color,p.radius);                   break;
+  }
+}
+
+// ── Full scene ────────────────────────────────────────────────────────────────
+function drawFullScene() {
+  fctx.clearRect(0,0,FW,FH);
+  const D = makeDrawer(fctx, FX, FY);
+
+  D.drawSky();
+  D.drawGrass();
+  D.drawSun(0,190,75);
+  D.drawCloud(-220,165,25);
+  D.drawCloud(160,185,20);
+  D.drawCloud(330,170,22);
+  D.drawBird(-170,135,'#111111',13);
+  D.drawBird(-20,150,'#111111',10);
+  D.drawBird(210,140,'#111111',11);
+  D.drawTrees(-360,30,5,65);
+  D.drawHouses(-130,-40,4,42);
+  D.drawTrees(210,-70,3,85);
+  D.drawRock(-230,-165,'#808080',18);
+  D.drawRock(285,-170,'#696969',15);
+  D.drawCirc(-340,-165,'#9B59B6',18);
+  D.drawRect(350,75,32,32,'#3498DB');
+  D.drawTri(335,-85,true,'#E74C3C',42);
+  D.drawRect(-350,45,55,22,'#F39C12');
+}
+
+// ── Function definitions ──────────────────────────────────────────────────────
+const PRESETS=['#E74C3C','#E67E22','#F1C40F','#2ECC71','#3498DB','#9B59B6','#1ABC9C','#E8A87C','#808080'];
+
+const FN_DEFS = {
+  draw_sky:   { desc:'Fills the entire canvas with a sky-blue background. Always call first.', params:[] },
+  draw_grass: { desc:'Draws a green grass strip across the lower half of the canvas.', params:[] },
+  draw_sun: { desc:'Draws an orange sunburst. Best placed in the upper sky (y > 100).', params:[
+    {name:'x',type:'range',min:-300,max:300,val:0,step:5,desc:'Horizontal position'},
+    {name:'y',type:'range',min:-200,max:280,val:190,step:5,desc:'Vertical position (positive = up)'},
+    {name:'radius',type:'range',min:20,max:120,val:75,step:5,desc:'Length of each sun ray'},
+  ]},
+  draw_cloud: { desc:'Draws a white fluffy cloud made of three overlapping circles.', params:[
+    {name:'x',type:'range',min:-350,max:350,val:-100,step:5,desc:'Horizontal position'},
+    {name:'y',type:'range',min:0,max:280,val:165,step:5,desc:'Vertical position'},
+    {name:'size',type:'range',min:10,max:60,val:25,step:2,desc:'Radius of each cloud puff'},
+  ]},
+  draw_bird: { desc:'Draws a V-shaped bird silhouette. Call several times at different positions for a flock.', params:[
+    {name:'x',type:'range',min:-350,max:350,val:-50,step:5,desc:'Horizontal position'},
+    {name:'y',type:'range',min:0,max:280,val:135,step:5,desc:'Vertical position'},
+    {name:'bird_color',type:'color',val:'#111111',presets:['#111111','#333333','#8B4513','#000080'],desc:'Bird color'},
+    {name:'size',type:'range',min:5,max:40,val:13,step:1,desc:'Wingspan length'},
+  ]},
+  draw_tree: { desc:'Draws a single layered pine tree with three shades of green and a brown trunk.', params:[
+    {name:'x',type:'range',min:-350,max:350,val:0,step:5,desc:'Horizontal position'},
+    {name:'y',type:'range',min:-200,max:100,val:0,step:5,desc:'Vertical position'},
+    {name:'size',type:'range',min:20,max:180,val:100,step:5,desc:'Overall tree size'},
+  ]},
+  draw_trees: { desc:'Draws a row of pine trees. Higher y values make trees appear smaller (depth effect).', params:[
+    {name:'x',type:'range',min:-350,max:100,val:-280,step:5,desc:'Starting x position'},
+    {name:'y',type:'range',min:-200,max:100,val:30,step:5,desc:'Starting y position'},
+    {name:'num_trees',type:'range',min:1,max:8,val:4,step:1,desc:'Number of trees'},
+    {name:'size',type:'range',min:20,max:180,val:65,step:5,desc:'Base tree size'},
+  ]},
+  draw_house: { desc:'Draws a house with a square body and triangular roof in the same color.', params:[
+    {name:'x',type:'range',min:-300,max:300,val:0,step:5,desc:'Horizontal center of house body'},
+    {name:'y',type:'range',min:-200,max:50,val:-40,step:5,desc:'Vertical center of house body'},
+    {name:'house_color',type:'color',val:'#E8A87C',presets:PRESETS,desc:'Wall and roof color'},
+    {name:'size',type:'range',min:20,max:120,val:60,step:5,desc:'Side length of the square body'},
+  ]},
+  draw_houses: { desc:'Draws a row of houses, each in a different random pastel color.', params:[
+    {name:'x',type:'range',min:-350,max:100,val:-200,step:5,desc:'Starting x position'},
+    {name:'y',type:'range',min:-200,max:50,val:-40,step:5,desc:'Starting y position'},
+    {name:'num_houses',type:'range',min:1,max:6,val:3,step:1,desc:'Number of houses'},
+    {name:'size',type:'range',min:20,max:100,val:55,step:5,desc:'Side length of each house body'},
+  ]},
+  draw_rock: { desc:'Draws an irregular lumpy rock shape.', params:[
+    {name:'x',type:'range',min:-350,max:350,val:0,step:5,desc:'Approximate horizontal center'},
+    {name:'y',type:'range',min:-250,max:50,val:-150,step:5,desc:'Approximate vertical center'},
+    {name:'rock_color',type:'color',val:'#808080',presets:['#808080','#696969','#A0A0A0','#8B7355','#C0C0C0'],desc:'Rock color'},
+    {name:'size',type:'range',min:8,max:50,val:20,step:2,desc:'Overall rock size'},
+  ]},
+  draw_rectangle: { desc:'Draws a filled rectangle centered at (x, y).', params:[
+    {name:'x',type:'range',min:-300,max:300,val:0,step:5,desc:'Horizontal center'},
+    {name:'y',type:'range',min:-250,max:250,val:0,step:5,desc:'Vertical center'},
+    {name:'rect_length',type:'range',min:10,max:200,val:80,step:5,desc:'Height (vertical size) — the up/down dimension'},
+    {name:'rect_width',type:'range',min:10,max:300,val:140,step:5,desc:'Width (horizontal size) — the left/right dimension'},
+    {name:'fill_color',type:'color',val:'#3498DB',presets:PRESETS,desc:'Fill color'},
+  ]},
+  draw_square: { desc:'Draws a filled square centered at (x, y).', params:[
+    {name:'x',type:'range',min:-300,max:300,val:0,step:5,desc:'Horizontal center'},
+    {name:'y',type:'range',min:-250,max:250,val:0,step:5,desc:'Vertical center'},
+    {name:'fill_color',type:'color',val:'#3498DB',presets:PRESETS,desc:'Fill color'},
+    {name:'size',type:'range',min:10,max:200,val:80,step:5,desc:'Side length'},
+  ]},
+  draw_triangle: { desc:'Draws an upward-pointing equilateral triangle centered at (x, y).', params:[
+    {name:'x',type:'range',min:-300,max:300,val:0,step:5,desc:'Horizontal center'},
+    {name:'y',type:'range',min:-250,max:250,val:0,step:5,desc:'Vertical center'},
+    {name:'filled',type:'bool',val:true,desc:'True = solid fill, False = outline only'},
+    {name:'fill_color',type:'color',val:'#E74C3C',presets:PRESETS,desc:'Fill or outline color'},
+    {name:'size',type:'range',min:10,max:200,val:100,step:5,desc:'Side length'},
+  ]},
+  draw_circle: { desc:'Draws a filled circle centered at (x, y).', params:[
+    {name:'x',type:'range',min:-300,max:300,val:0,step:5,desc:'Horizontal center'},
+    {name:'y',type:'range',min:-250,max:250,val:0,step:5,desc:'Vertical center'},
+    {name:'fill_color',type:'color',val:'#9B59B6',presets:PRESETS,desc:'Fill color'},
+    {name:'radius',type:'range',min:5,max:180,val:60,step:5,desc:'Circle radius'},
+  ]},
+};
+
+// ── State ─────────────────────────────────────────────────────────────────────
+let currentFn = 'draw_sky';
+const paramVals = {};
+
+function fmtVal(p) {
+  const v = paramVals[p.name];
+  if (typeof v === 'boolean') return v ? 'True' : 'False';
+  if (typeof v === 'string')  return `"${v}"`;
+  return String(v);  // always return a string so .startsWith() is safe
+}
+
+function buildCodeHTML() {
+  const def = FN_DEFS[currentFn];
+  if (!def.params.length) return `<span class="fn">${currentFn}</span>()`;
+  const args = def.params.map(p => {
+    const raw = fmtVal(p);
+    if (raw === 'True' || raw === 'False') return `<span class="kw">${raw}</span>`;
+    if (raw.startsWith('"'))              return `<span class="str">${raw}</span>`;
+    return `<span class="num">${raw}</span>`;
+  }).join(', ');
+  return `<span class="fn">${currentFn}</span>(${args})`;
+}
+
+function redraw() {
+  renderPreview(currentFn, paramVals);
+  document.getElementById('code-display').innerHTML = buildCodeHTML();
+}
+
+function buildControls() {
+  const def = FN_DEFS[currentFn];
+  document.getElementById('fn-name').textContent = currentFn + (def.params.length ? '(…)' : '()');
+  document.getElementById('fn-desc').textContent = def.desc;
+  def.params.forEach(p => { if (paramVals[p.name+'__fn'] !== currentFn) { paramVals[p.name]=p.val; paramVals[p.name+'__fn']=currentFn; }});
+
+  const c = document.getElementById('params-container');
+  c.innerHTML = '';
+  if (!def.params.length) {
+    c.innerHTML = '<p style="color:var(--muted);font-size:.8rem;margin-top:8px">No parameters — just call it!</p>';
+    return;
+  }
+  def.params.forEach(p => {
+    const div = document.createElement('div');
+    div.className = 'param-group';
+    if (p.type === 'range') {
+      div.innerHTML = `<div class="param-label"><span class="param-name">${p.name}</span><span class="param-val" id="val-${p.name}">${paramVals[p.name]}</span></div>
+        <div class="param-desc">${p.desc}</div>
+        <input type="range" min="${p.min}" max="${p.max}" step="${p.step}" value="${paramVals[p.name]}"
+          oninput="paramVals['${p.name}']=+this.value;document.getElementById('val-${p.name}').textContent=this.value;redraw()">`;
+    } else if (p.type === 'color') {
+      const pv = paramVals[p.name];
+      const dots = (p.presets||PRESETS).map(c =>
+        `<div class="color-dot" title="${c}" style="background:${c};border-color:${pv===c?'#333':'transparent'}"
+          onclick="paramVals['${p.name}']='${c}';document.getElementById('ci-${p.name}').value='${c}';buildControls();redraw()"></div>`
+      ).join('');
+      div.innerHTML = `<div class="param-label"><span class="param-name">${p.name}</span>
+        <input type="color" id="ci-${p.name}" value="${pv}"
+          oninput="paramVals['${p.name}']=this.value;redraw()"></div>
+        <div class="param-desc">${p.desc}</div><div class="color-presets">${dots}</div>`;
+    } else if (p.type === 'bool') {
+      const tv = paramVals[p.name]===true;
+      div.innerHTML = `<div class="param-label"><span class="param-name">${p.name}</span></div>
+        <div class="param-desc">${p.desc}</div>
+        <div class="bool-row">
+          <button class="bool-btn ${tv?'active':''}" onclick="paramVals['${p.name}']=true;buildControls();redraw()">True</button>
+          <button class="bool-btn ${!tv?'active':''}" onclick="paramVals['${p.name}']=false;buildControls();redraw()">False</button>
+        </div>`;
+    }
+    c.appendChild(div);
+  });
+}
+
+function selectFn(name) {
+  currentFn = name;
+  document.querySelectorAll('.fn-btn').forEach(b =>
+    b.classList.toggle('active', b.getAttribute('onclick').includes(`'${name}'`)));
+  buildControls();
+  redraw();
+}
+
+function showTab(tab) {
+  document.getElementById('explore-tab').classList.toggle('hidden', tab!=='explore');
+  document.getElementById('sidebar').style.display = tab==='explore' ? '' : 'none';
+  document.getElementById('scene-tab').classList.toggle('hidden', tab!=='scene');
+  document.querySelectorAll('.tab-btn').forEach((b,i) =>
+    b.classList.toggle('active', (i===0&&tab==='explore')||(i===1&&tab==='scene')));
+  if (tab==='scene') drawFullScene();
+}
+
+function copyCode() {
+  const el = document.getElementById('code-display');
+  navigator.clipboard.writeText(el.innerText).then(() => {
+    const btn = document.getElementById('copy-btn');
+    btn.textContent = '✓ Copied';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 1500);
+  });
+}
+
+// Init
+buildControls();
+redraw();
+</script>
+</body>
+</html>
